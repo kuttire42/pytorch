@@ -517,6 +517,10 @@ class CodeGen(object):
                 return
             raise NotImplementedError(f'node: {node.op} {node.target}')
 
+        print_readable_comment = '# To see more debug info, please use `graph_module.print_readable()`\n'
+        if not verbose:
+            body.append(print_readable_comment)
+
         for node in nodes:
             # NOTE: emit_node does not emit a string with newline. It depends
             # on delete_unused_values to append one
@@ -525,13 +529,11 @@ class CodeGen(object):
             emit_node(node)
             delete_unused_values(node)
 
-        if len(body) == 0:
+        if len(body) == 1 and body[0] is print_readable_comment:
             # If the Graph has no non-placeholder nodes, no lines for the body
             # have been emitted. To continue to have valid Python code, emit a
             # single pass statement
             body.append('pass\n')
-
-
 
         if len(wrapped_fns) > 0:
             wrap_name = add_global('wrap', torch.fx.wrap)
