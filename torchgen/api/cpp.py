@@ -13,6 +13,7 @@ from torchgen.api.types import (
     CType,
     dimnameListT,
     intArrayRefT,
+    iTensorListRefT,
     ListCType,
     longT,
     MutRefCType,
@@ -161,7 +162,10 @@ def argumenttype_type(
             else:
                 return NamedCType(binds, BaseCType(symIntArrayRefT))
         elif str(t.elem) == "Tensor":
-            return NamedCType(binds, BaseCType(tensorListT))
+            if local.use_ilistref_for_tensor_lists():
+                return NamedCType(binds, ConstRefCType(BaseCType(iTensorListRefT)))
+            else:
+                return NamedCType(binds, BaseCType(tensorListT))
         elif str(t.elem) == "Scalar":
             return NamedCType(binds, ArrayRefCType(BaseCType(scalarT)))
         elif str(t.elem) == "Dimname":
@@ -178,7 +182,11 @@ def argumenttype_type(
 
 # Translate a JIT argument into its C++ type
 def argument_type(a: Argument, *, binds: ArgName) -> NamedCType:
-    return argumenttype_type(a.type, mutable=a.is_write, binds=binds)
+    return argumenttype_type(
+        a.type,
+        mutable=a.is_write,
+        binds=binds,
+    )
 
 
 # Translation of a (non-multi) return type from JIT to C++
